@@ -1,112 +1,108 @@
-#include <Servo.h>
-#include <LiquidCrystal.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
-Servo motorlinks;
-Servo motorrechts;
+// LCD I2C
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// LCD: RS,E,D4,D5,D6,D7
-LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
-
-// Flipper knoppen
-const int knopLinks = 11;
-const int knopRechts = 10;
-
-// IR sensor
-const int irSensor = 12;
-const int ledPin = 13;
+// Sensoren
+const int scoreSensor = 12;
+const int levensSensor = 7;
 
 // Relais
-const int relaisPin = A1;
-const int relaisKnop = A0;
+const int relaisPin = 2;
 
-bool relaisStatus = false;
-bool vorigeRelaisKnop = HIGH;
+// Spelgegevens
+long score = 0;
+int levens = 3;
 
-// Score
-int score = 0;
-int vorigeStatus = HIGH;
+// Sensorstatus
+int vorigeScoreStatus = HIGH;
+int vorigeLevensStatus = HIGH;
+
+// Cooldown voor levenssensor
+unsigned long laatsteLevensDetectie = 0;
+const unsigned long levensCooldown = 15000; // 15 seconden
 
 void setup() {
-
-  pinMode(knopLinks, INPUT_PULLUP);
-  pinMode(knopRechts, INPUT_PULLUP);
-
-  pinMode(irSensor, INPUT);
-  pinMode(ledPin, OUTPUT);
+  pinMode(scoreSensor, INPUT);
+  pinMode(levensSensor, INPUT);
 
   pinMode(relaisPin, OUTPUT);
-  pinMode(relaisKnop, INPUT_PULLUP);
 
-  digitalWrite(relaisPin, LOW);
+  // Motor aan via relais
+  digitalWrite(relaisPin, HIGH);
 
-  motorlinks.attach(9);
-  motorrechts.attach(8);
-
-  motorlinks.write(0);
-  motorrechts.write(95);
-
-  lcd.begin(16, 2);
-  lcd.clear();
+  lcd.init();
+  lcd.backlight();
 
   lcd.setCursor(0, 0);
-  lcd.print("Score:");
+  lcd.print("Score: 0");
 
   lcd.setCursor(0, 1);
+  lcd.print("Levens: 3");
+}
+
+void updateDisplay() {
+  lcd.setCursor(0, 0);
+  lcd.print("Score:       ");
+  lcd.setCursor(7, 0);
   lcd.print(score);
+
+  lcd.setCursor(0, 1);
+  lcd.print("Levens:      ");
+  lcd.setCursor(8, 1);
+  lcd.print(levens);
+}
+
+void gameOver() {
+  digitalWrite(relaisPin, LOW); // motor uit
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("GAME OVER");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Score:");
+  lcd.print(score);
+
+  while (true) {
+  }
 }
 
 void loop() {
 
-  // Linker flipper
-  if (digitalRead(knopLinks) == LOW) {
-    motorlinks.write(95);
-  } else {
-    motorlinks.write(0);
+  // SCORE SENSOR (+1000)
+  int scoreStatus = digitalRead(scoreSensor);
+
+  if (vorigeScoreStatus == HIGH && scoreStatus == LOW) {
+    score += 1000;
+    updateDisplay();
   }
 
-  // Rechter flipper
-  if (digitalRead(knopRechts) == LOW) {
-    motorrechts.write(0);
-  } else {
-    motorrechts.write(95);
-  }
+  vorigeScoreStatus = scoreStatus;
 
-  // Relais toggle knop
-  bool knopStatus = digitalRead(relaisKnop);
+  // LEVENS SENSOR (-1 leven)
+  int levensStatus = digitalRead(levensSensor);
 
-  if (vorigeRelaisKnop == HIGH && knopStatus == LOW) {
+  if (vorigeLevensStatus == HIGH && levensStatus == LOW) {
 
-    relaisStatus = !relaisStatus;
+    if (millis() - laatsteLevensDetectie >= levensCooldown) {
 
-    if (relaisStatus) {
-      digitalWrite(relaisPin, HIGH); // COM -> NO
-    } else {
-      digitalWrite(relaisPin, LOW);  // COM -> NC
+      levens--;
+
+      if (levens < 0) {
+        levens = 0;
+      }
+
+      updateDisplay();
+
+      laatsteLevensDetectie = millis();
+
+      if (levens == 0) {
+        gameOver();
+      }
     }
-
-    delay(50);
   }
 
-  vorigeRelaisKnop = knopStatus;
-
-  // IR sensor
-  int sensorStatus = digitalRead(irSensor);
-
-  if (vorigeStatus == HIGH && sensorStatus == LOW) {
-
-    score++;
-
-    lcd.setCursor(0, 1);
-    lcd.print("                ");
-    lcd.setCursor(0, 1);
-    lcd.print(score);
-
-    digitalWrite(ledPin, HIGH);
-  }
-
-  if (sensorStatus == HIGH) {
-    digitalWrite(ledPin, LOW);
-  }
-
-  vorigeStatus = sensorStatus;
+  vorigeLevensStatus = levensStatus;
 }
