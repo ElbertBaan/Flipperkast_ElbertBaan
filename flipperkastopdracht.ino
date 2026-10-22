@@ -205,6 +205,7 @@ void loop() {
       toonScore();
 
     lastTiltTime = millis();
+<<<<<<< HEAD
 
     if (levens <= 0) {
 
@@ -229,6 +230,11 @@ void loop() {
       }
     }
   }
+=======
+}
+    
+    
+>>>>>>> 7f13a61c76d5f671fcc91176d2e2946ebeadb0e0
   // Score-sensor
   int scoreStatus = digitalRead(irScorePin);
 
@@ -258,12 +264,18 @@ void loop() {
       lastLevensTime = millis();
 
       if (levens <= 0) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7f13a61c76d5f671fcc91176d2e2946ebeadb0e0
         // Motor uit
         digitalWrite(relaisPin, LOW);
 
         lcd.clear();
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7f13a61c76d5f671fcc91176d2e2946ebeadb0e0
         lcd.setCursor(0, 0);
         lcd.print("GAME OVER!");
 
@@ -278,11 +290,25 @@ void loop() {
         Serial.print(",");
         Serial.println(machine);
 
+<<<<<<< HEAD
+=======
+        delay(10000);
+        score = 0;
+        levens = 3;
+        spelGestart = false;
+
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Rechter knop");
+        lcd.setCursor(0, 1);
+        lcd.print("voor start");
+        return;
+
+>>>>>>> 7f13a61c76d5f671fcc91176d2e2946ebeadb0e0
         while (true) {
         }
       }
     }
   }
-
   lastLevensStatus = levensStatus;
 }
