@@ -1,6 +1,11 @@
 #include <Servo.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <MPU6050.h>
+
+// Netwerk
+String naam = "Elbert";
+String machine = "TI1C";
 
 // Waardes
 int levens = 3;
@@ -10,7 +15,7 @@ long score = 0;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // Startknop
-const int startKnop = 22;
+const int startKnop = 10;
 bool spelGestart = false;
 
 // Relais voor DC-motor
@@ -45,7 +50,19 @@ const int rechts = 47;
 unsigned long lastLedTime = 0;
 bool ledStand = false;
 
+//tilt
+MPU6050 mpu;
+const int tiltGrens = 17000;
+unsigned long lastTiltTime = 0;
+const unsigned long tiltCooldown = 2000;
+
 void setup() {
+
+  Serial.begin(9600);
+
+  //tiltsensor
+  Wire.begin();
+   mpu.initialize();
 
   // Flippers
   pinMode(flipperlinks, INPUT_PULLUP);
@@ -78,9 +95,10 @@ void setup() {
   lcd.backlight();
 
   lcd.setCursor(0, 0);
-  lcd.print("Druk START");
+  lcd.print("Rechter knop");
+
   lcd.setCursor(0, 1);
-  lcd.print("om te spelen");
+  lcd.print("voor start");
 }
 
 void fliplinks() {
@@ -101,16 +119,16 @@ void fliprechts() {
 
 void toonScore() {
   lcd.setCursor(0, 0);
-  lcd.print("Score:");
+  lcd.print("Score: ");
   lcd.print(score);
-  lcd.print("     ");
+  lcd.print("      ");
 }
 
 void toonLevens() {
-  lcd.setCursor(0, 1);
-  lcd.print("Levens:");
+  lcd.setCursor(0, 1);                
+  lcd.print("Levens: ");
   lcd.print(levens);
-  lcd.print("     ");
+  lcd.print("      ");
 }
 
 void ledverlichting() {
@@ -145,23 +163,6 @@ void ledverlichting() {
   }
 }
 
-void gameOver() {
-
-  digitalWrite(relaisPin, LOW);
-
-  lcd.clear();
-
-  lcd.setCursor(0, 0);
-  lcd.print("GAME OVER!");
-
-  lcd.setCursor(0, 1);
-  lcd.print("Score:");
-  lcd.print(score);
-
-  while (true) {
-  }
-}
-
 void loop() {
 
   // Wachten op start
@@ -173,6 +174,7 @@ void loop() {
       score = 0;
       levens = 3;
 
+      // Motor starten
       digitalWrite(relaisPin, HIGH);
 
       lcd.clear();
@@ -187,9 +189,46 @@ void loop() {
   fliplinks();
   fliprechts();
 
-  // LED effecten
+  // LEDs
   ledverlichting();
 
+     // Tilt sensor MPU6050
+  int16_t ax, ay, az;
+  int16_t gx, gy, gz;
+
+  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+
+ if ((abs(gx) > 15000 || abs(gy) > 15000 || abs(gz) > 15000) &&
+    millis() - lastTiltTime > tiltCooldown)
+{
+      score -= 1000;
+      toonScore();
+
+    lastTiltTime = millis();
+
+    if (levens <= 0) {
+
+      digitalWrite(relaisPin, LOW);
+
+      lcd.clear();
+
+      lcd.setCursor(0, 0);
+      lcd.print("GAME OVER!");
+
+      lcd.setCursor(0, 1);
+      lcd.print("Score:");
+      lcd.print(score);
+
+      Serial.print(naam);
+      Serial.print(",");
+      Serial.print(score);
+      Serial.print(",");
+      Serial.println(machine);
+
+      while (true) {
+      }
+    }
+  }
   // Score-sensor
   int scoreStatus = digitalRead(irScorePin);
 
@@ -198,7 +237,6 @@ void loop() {
     if (millis() - lastScoreTime >= scoreCooldown) {
 
       score += 750;
-
       toonScore();
 
       lastScoreTime = millis();
@@ -215,13 +253,33 @@ void loop() {
     if (millis() - lastLevensTime >= levensCooldown) {
 
       levens--;
-
       toonLevens();
 
       lastLevensTime = millis();
 
       if (levens <= 0) {
-        gameOver();
+
+        // Motor uit
+        digitalWrite(relaisPin, LOW);
+
+        lcd.clear();
+
+        lcd.setCursor(0, 0);
+        lcd.print("GAME OVER!");
+
+        lcd.setCursor(0, 1);
+        lcd.print("Score:");
+        lcd.print(score);
+
+        // Score versturen bij GAME OVER
+        Serial.print(naam);
+        Serial.print(",");
+        Serial.print(score);
+        Serial.print(",");
+        Serial.println(machine);
+
+        while (true) {
+        }
       }
     }
   }
