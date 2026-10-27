@@ -205,9 +205,42 @@ void loop() {
       toonScore();
 
     lastTiltTime = millis();
+<<<<<<< HEAD
 }
     
     
+=======
+<<<<<<< HEAD
+
+    if (levens <= 0) {
+
+      digitalWrite(relaisPin, LOW);
+
+      lcd.clear();
+
+      lcd.setCursor(0, 0);
+      lcd.print("GAME OVER!");
+
+      lcd.setCursor(0, 1);
+      lcd.print("Score:");
+      lcd.print(score);
+
+      Serial.print(naam);
+      Serial.print(",");
+      Serial.print(score);
+      Serial.print(",");
+      Serial.println(machine);
+
+      while (true) {
+      }
+    }
+  }
+=======
+}
+    
+    
+>>>>>>> 7f13a61c76d5f671fcc91176d2e2946ebeadb0e0
+>>>>>>> 95d91d3c4347fab8796ddcb15fc65feb7f6a54cd
   // Score-sensor
   int scoreStatus = digitalRead(irScorePin);
 
@@ -237,10 +270,24 @@ void loop() {
       lastLevensTime = millis();
 
       if (levens <= 0) {
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+
+=======
+>>>>>>> 7f13a61c76d5f671fcc91176d2e2946ebeadb0e0
+>>>>>>> 95d91d3c4347fab8796ddcb15fc65feb7f6a54cd
         // Motor uit
         digitalWrite(relaisPin, LOW);
 
         lcd.clear();
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+
+=======
+>>>>>>> 7f13a61c76d5f671fcc91176d2e2946ebeadb0e0
+>>>>>>> 95d91d3c4347fab8796ddcb15fc65feb7f6a54cd
         lcd.setCursor(0, 0);
         lcd.print("GAME OVER!");
 
@@ -255,6 +302,11 @@ void loop() {
         Serial.print(",");
         Serial.println(machine);
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> 95d91d3c4347fab8796ddcb15fc65feb7f6a54cd
         delay(10000);
         score = 0;
         levens = 3;
@@ -267,6 +319,10 @@ void loop() {
         lcd.print("voor start");
         return;
 
+<<<<<<< HEAD
+=======
+>>>>>>> 7f13a61c76d5f671fcc91176d2e2946ebeadb0e0
+>>>>>>> 95d91d3c4347fab8796ddcb15fc65feb7f6a54cd
         while (true) {
         }
       }
